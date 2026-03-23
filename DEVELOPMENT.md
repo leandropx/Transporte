@@ -28,10 +28,10 @@ Este documento rastrea el progreso, la arquitectura y las decisiones técnicas t
 - [x] Integración inicial del cliente de Supabase.
 - [x] Diseño preliminar del esquema de base de datos (`supabase_schema.sql`).
 
-### FASE 2: Autenticación y Layout (En Progreso)
-- [ ] Implementación del flujo de login / registro con Supabase Auth.
-- [ ] Diseño y desarrollo del Layout principal (Sidebar, Topbar).
-- [ ] Protección de rutas mediante Vue Router basado en la sesión de Supabase.
+### FASE 2: Autenticación y Layout (Completado)
+- [x] Implementación del flujo de login / registro con Supabase Auth.
+- [x] Diseño y desarrollo del Layout principal (Sidebar, Topbar).
+- [x] Protección de rutas mediante Vue Router basado en la sesión de Supabase.
 
 ### FASE 3: Módulo de Gestión de Camiones (Pendiente)
 - [ ] Vista de listado de camiones con filtrado y búsqueda global (`useTruckSearch.ts` y `GlobalSearch.vue`).

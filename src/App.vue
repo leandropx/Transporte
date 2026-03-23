@@ -1,45 +1,34 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <Truck class="h-6 w-6 text-brand-600" />
-          <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-brand-900">
-            FleetMaster
-          </span>
-        </div>
-        
-        <nav class="hidden md:flex space-x-8">
-          <router-link to="/" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Dashboard</router-link>
-          <router-link to="/trucks" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Camiones</router-link>
-          <router-link to="/workers" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Conductores</router-link>
-          <router-link to="/routes" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Rutas</router-link>
-          <router-link to="/maintenance" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Mantenciones</router-link>
-        </nav>
-      </div>
-    </header>
-
-    <main class="flex-grow">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
+  <div v-if="!authStore.loading">
+    <component :is="layoutComponent" />
+  </div>
+  <div v-else class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Truck } from 'lucide-vue-next'
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import MainLayout from '@/components/layout/MainLayout.vue'
+import AuthLayout from '@/components/layout/AuthLayout.vue'
+
+const route = useRoute()
+const authStore = useAuthStore()
+
+onMounted(async () => {
+  await authStore.initializeAuth()
+})
+
+const layoutComponent = computed(() => {
+  if (route.meta.layout === 'auth') {
+    return AuthLayout
+  }
+  return MainLayout
+})
 </script>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+/* Solo estilos globales base si aplica */
 </style>
