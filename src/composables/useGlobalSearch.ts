@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase'
 
 export interface SearchResult {
   id: string
-  type: 'vehicle' | 'route' | 'maintenance'
+  type: 'vehicle' | 'route' | 'maintenance' | 'worker'
   title: string
   subtitle: string
   metadata?: any
@@ -26,7 +26,7 @@ export function useGlobalSearch() {
 
     try {
       // Execute multi-table queries concurrently
-      const [vehiclesRes, routesRes, maintenanceRes] = await Promise.all([
+      const [vehiclesRes, routesRes, maintenanceRes, workersRes] = await Promise.all([
         supabase
           .from('vehicles')
           .select('id, license_plate, model, status')
@@ -43,6 +43,12 @@ export function useGlobalSearch() {
           .from('maintenance_logs')
           .select('id, type, description, cost, maintenance_date, vehicles(license_plate)')
           .or(`type.ilike.${searchTerm},description.ilike.${searchTerm}`)
+          .limit(5),
+
+        supabase
+          .from('workers')
+          .select('id, rut, full_name, status, license_type')
+          .or(`rut.ilike.${searchTerm},full_name.ilike.${searchTerm}`)
           .limit(5)
       ])
 
@@ -83,6 +89,19 @@ export function useGlobalSearch() {
             title: m.description,
             subtitle: `Camión: ${m.vehicles?.license_plate || '?'} - ${m.type} ($${m.cost})`,
             metadata: m
+          })
+        })
+      }
+
+      // Parse Workers
+      if (workersRes.data) {
+        workersRes.data.forEach(w => {
+          combinedResults.push({
+            id: String(w.id),
+            type: 'worker',
+            title: w.full_name,
+            subtitle: `RUT: ${w.rut} - Licencia ${w.license_type}`,
+            metadata: w
           })
         })
       }

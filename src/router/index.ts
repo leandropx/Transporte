@@ -14,6 +14,11 @@ const router = createRouter({
       component: () => import('@/views/TrucksView.vue')
     },
     {
+      path: '/workers',
+      name: 'workers',
+      component: () => import('@/views/WorkersView.vue')
+    },
+    {
       path: '/truck/:licensePlate',
       name: 'truck-360',
       component: () => import('@/views/Truck360View.vue'),

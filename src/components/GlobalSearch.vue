@@ -15,7 +15,7 @@
           size === 'large' ? 'text-xl' : 'text-base',
           isDropdownOpen && results.length > 0 ? 'rounded-b-none border-b-transparent' : ''
         ]"
-        placeholder="Busca por patente, ruta, fecha o mantención..."
+        placeholder="Busca por patente, ruta, conductor o mantención..."
         autocomplete="off"
         :disabled="isSearching"
       />
@@ -72,6 +72,7 @@
               <Truck v-if="item.type === 'vehicle'" class="w-5 h-5 text-brand-500" />
               <MapPin v-else-if="item.type === 'route'" class="w-5 h-5 text-blue-500" />
               <PenTool v-else-if="item.type === 'maintenance'" class="w-5 h-5 text-orange-500" />
+              <Users v-else-if="item.type === 'worker'" class="w-5 h-5 text-amber-500" />
             </div>
             <div class="ml-3 flex-1 min-w-0">
               <p class="text-sm font-bold text-gray-900 truncate group-hover/item:text-brand-600 transition-colors">
@@ -86,7 +87,8 @@
                 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide',
                 item.type === 'vehicle' ? 'bg-brand-50 text-brand-700' :
                 item.type === 'route' ? 'bg-blue-50 text-blue-700' :
-                'bg-orange-50 text-orange-700'
+                item.type === 'maintenance' ? 'bg-orange-50 text-orange-700' :
+                'bg-amber-50 text-amber-700'
               ]">
                 {{ translateType(item.type) }}
               </span>
@@ -101,7 +103,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Loader2, AlertCircle, Truck, MapPin, PenTool, X } from 'lucide-vue-next'
+import { Search, Loader2, AlertCircle, Truck, MapPin, PenTool, Users, X } from 'lucide-vue-next'
 import { useGlobalSearch, SearchResult } from '@/composables/useGlobalSearch'
 
 const props = defineProps({
@@ -162,6 +164,8 @@ const selectResult = (item: SearchResult) => {
     router.push({ name: 'routes' })
   } else if (item.type === 'maintenance') {
     router.push({ name: 'maintenance' })
+  } else if (item.type === 'worker') {
+    router.push({ name: 'workers' })
   }
 }
 
@@ -188,6 +192,7 @@ const translateType = (type: string) => {
     case 'vehicle': return 'Camión'
     case 'route': return 'Ruta'
     case 'maintenance': return 'Mantención'
+    case 'worker': return 'Conductor'
     default: return type
   }
 }
