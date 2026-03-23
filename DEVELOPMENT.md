@@ -33,10 +33,10 @@ Este documento rastrea el progreso, la arquitectura y las decisiones técnicas t
 - [x] Diseño y desarrollo del Layout principal (Sidebar, Topbar).
 - [x] Protección de rutas mediante Vue Router basado en la sesión de Supabase.
 
-### FASE 3: Módulo de Gestión de Camiones (Pendiente)
-- [ ] Vista de listado de camiones con filtrado y búsqueda global (`useTruckSearch.ts` y `GlobalSearch.vue`).
-- [ ] Formulario de registro y edición de información de cada unidad (placa, marca, modelo, estado, capacidad).
-- [ ] Integración de los endpoints/consultas de Supabase en stores de Pinia.
+### FASE 3: Módulo de Gestión de Camiones (Completado)
+- [x] Vista de listado de camiones con filtrado y búsqueda global (`useTruckSearch.ts` y `GlobalSearch.vue`).
+- [x] Formulario de registro y edición de información de cada unidad (placa, marca, modelo, estado, capacidad).
+- [x] Integración de los endpoints/consultas de Supabase en stores de Pinia.
 
 ### FASE 4: Módulo de Conductores y Viajes (Pendiente)
 - [ ] Asignación de conductores a camiones.

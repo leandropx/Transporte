@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <Truck class="h-8 w-8 text-brand-600" /> Directorio de Camiones
@@ -9,27 +9,47 @@
       </div>
       <button 
         @click="openModal()"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-brand-600 hover:bg-brand-700 transition-colors"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-brand-600 hover:bg-brand-700 transition-colors shrink-0"
       >
         <Plus class="h-5 w-5 mr-2" /> Agregar Camión
       </button>
     </div>
 
+    <!-- Buscador Local -->
+    <div class="mb-6 relative max-w-md">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Search class="h-5 w-5 text-gray-400" />
+      </div>
+      <input
+        v-model="truckStore.searchQuery"
+        type="text"
+        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm transition-colors"
+        placeholder="Filtrar por patente, modelo o estado..."
+      />
+    </div>
+
     <!-- Loading State -->
-    <div v-if="isLoading" class="animate-pulse space-y-4">
+    <div v-if="truckStore.isLoading" class="animate-pulse space-y-4">
       <div v-for="i in 5" :key="i" class="h-16 bg-white rounded-xl shadow-sm border border-gray-100"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 p-4 border border-red-200 rounded-xl text-red-600">
-      <AlertTriangle class="h-5 w-5 inline mr-2" /> {{ error }}
+    <div v-else-if="truckStore.error" class="bg-red-50 p-4 border border-red-200 rounded-xl text-red-600">
+      <AlertTriangle class="h-5 w-5 inline mr-2" /> {{ truckStore.error }}
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="trucks.length === 0" class="glass-panel rounded-3xl p-12 text-center">
+    <div v-else-if="truckStore.trucks.length === 0" class="glass-panel rounded-3xl p-12 text-center">
       <Truck class="h-12 w-12 text-gray-300 mx-auto mb-4" />
       <h3 class="text-lg font-medium text-gray-900">No hay camiones registrados</h3>
       <p class="text-sm text-gray-500 mt-1">Registra tu primer vehículo para comenzar la gestión.</p>
+    </div>
+    
+    <!-- No Results found on search -->
+    <div v-else-if="truckStore.filteredTrucks.length === 0" class="glass-panel rounded-3xl p-12 text-center">
+      <Search class="h-12 w-12 text-gray-300 mx-auto mb-4" />
+      <h3 class="text-lg font-medium text-gray-900">No hay coincidencias</h3>
+      <p class="text-sm text-gray-500 mt-1">No se encontraron camiones para la búsqueda "{{ truckStore.searchQuery }}".</p>
     </div>
 
     <!-- Data Table -->
@@ -44,7 +64,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="truck in trucks" :key="truck.id" class="hover:bg-gray-50 transition-colors">
+          <tr v-for="truck in truckStore.filteredTrucks" :key="truck.id" class="hover:bg-gray-50 transition-colors">
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold border font-mono tracking-wider cursor-pointer hover:bg-gray-100 transition"
                     @click="goToTruck(truck.license_plate)"
@@ -136,13 +156,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/services/supabase'
-import { Truck, Edit2, Plus, AlertTriangle, X, Loader2 } from 'lucide-vue-next'
+import { useTrucksStore } from '@/stores/trucks'
+import { Truck, Edit2, Plus, AlertTriangle, X, Loader2, Search } from 'lucide-vue-next'
 
 const router = useRouter()
-const trucks = ref<any[]>([])
-const isLoading = ref(true)
-const error = ref('')
+const truckStore = useTrucksStore()
 
 // Modal state
 const isModalOpen = ref(false)
@@ -157,23 +175,6 @@ const form = ref({
   capacity: 0,
   status: 'disponible'
 })
-
-const fetchTrucks = async () => {
-  try {
-    isLoading.value = true
-    const { data, error: supaError } = await supabase
-      .from('vehicles')
-      .select('*')
-      .order('created_at', { ascending: false })
-      
-    if (supaError) throw supaError
-    trucks.value = data || []
-  } catch (err: any) {
-    error.value = 'Error cargando los vehículos: ' + (err.message || '')
-  } finally {
-    isLoading.value = false
-  }
-}
 
 const goToTruck = (licensePlate: string) => {
   router.push({ name: 'truck-360', params: { licensePlate } })
@@ -197,7 +198,7 @@ const openModal = (truck: any = null) => {
       license_plate: '',
       model: '',
       capacity: 0,
-      status: 'disponible' // Implicit standard for new creations
+      status: 'disponible'
     }
   }
   isModalOpen.value = true
@@ -220,8 +221,6 @@ const submitForm = async () => {
     }
   }
 
-  // Old format: AA-1111 (2 letters, 4 numbers)
-  // New format: BBBB-11 (4 consonants excluding M, N, Ñ, Q, and vowels)
   const isOldFormat = /^[A-Z]{2}-[0-9]{4}$/.test(formattedPlate);
   const isNewFormat = /^[BCDFGHJKLPRSTVWXYZ]{4}-[0-9]{2}$/.test(formattedPlate);
 
@@ -234,42 +233,21 @@ const submitForm = async () => {
   
   try {
     if (isEditing.value) {
-      // Update existing
-      const { error: updateError } = await supabase
-        .from('vehicles')
-        .update({
-          model: form.value.model.trim(),
-          capacity: form.value.capacity,
-          status: form.value.status
-        })
-        .eq('id', form.value.id)
-        
-      if (updateError) throw updateError
-      
+      await truckStore.updateTruck(form.value.id, {
+        model: form.value.model.trim(),
+        capacity: form.value.capacity,
+        status: form.value.status
+      })
     } else {
-      // Insert new
-      const { error: insertError } = await supabase
-        .from('vehicles')
-        .insert({
-          license_plate: formattedPlate,
-          model: form.value.model.trim(),
-          capacity: form.value.capacity,
-          // status triggers default 'disponible' in DB level but we can send it explicitly
-          status: 'disponible'
-        })
-        
-      if (insertError) {
-        if (insertError.code === '23505') {
-          throw new Error('Ya existe un vehículo registrado con esa patente.')
-        }
-        throw insertError
-      }
+      await truckStore.createTruck({
+        license_plate: formattedPlate,
+        model: form.value.model.trim(),
+        capacity: form.value.capacity,
+        status: 'disponible'
+      })
     }
     
-    // Success
     closeModal()
-    await fetchTrucks() // refresh list
-    
   } catch (err: any) {
     formError.value = err.message || 'Error al guardar la información del vehículo'
   } finally {
@@ -288,6 +266,6 @@ const badgeClasses = (status: string) => {
 }
 
 onMounted(() => {
-  fetchTrucks()
+  truckStore.fetchTrucks()
 })
 </script>
