@@ -11,6 +11,7 @@
         
         <nav class="hidden md:flex space-x-8">
           <router-link to="/" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Dashboard</router-link>
+          <router-link to="/trucks" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Camiones</router-link>
           <router-link to="/routes" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Rutas</router-link>
           <router-link to="/maintenance" class="text-gray-600 hover:text-brand-600 font-medium transition-colors" active-class="text-brand-600">Mantenciones</router-link>
         </nav>

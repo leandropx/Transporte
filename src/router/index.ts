@@ -9,6 +9,11 @@ const router = createRouter({
       component: () => import('@/views/DashboardView.vue')
     },
     {
+      path: '/trucks',
+      name: 'trucks',
+      component: () => import('@/views/TrucksView.vue')
+    },
+    {
       path: '/truck/:licensePlate',
       name: 'truck-360',
       component: () => import('@/views/Truck360View.vue'),

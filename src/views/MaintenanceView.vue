@@ -172,6 +172,16 @@ const fetchLogs = async () => {
 
 const submitLog = async () => {
   formError.value = ''
+
+  let formattedPlate = form.value.license.toUpperCase().replace(/[\s-]/g, '')
+  if (formattedPlate.length === 6) {
+    if (/^[A-Z]{2}[0-9]{4}$/.test(formattedPlate)) {
+      formattedPlate = formattedPlate.substring(0, 2) + '-' + formattedPlate.substring(2)
+    } else if (/^[BCDFGHJKLPRSTVWXYZ]{4}[0-9]{2}$/.test(formattedPlate)) {
+      formattedPlate = formattedPlate.substring(0, 4) + '-' + formattedPlate.substring(4)
+    }
+  }
+
   isSubmitting.value = true
   
   try {
@@ -179,7 +189,7 @@ const submitLog = async () => {
     const { data: vData, error: vError } = await supabase
       .from('vehicles')
       .select('id')
-      .eq('license_plate', form.value.license.toUpperCase().trim())
+      .eq('license_plate', formattedPlate)
       .single()
       
     if (vError || !vData) {
