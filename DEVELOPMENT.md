@@ -38,10 +38,10 @@ Este documento rastrea el progreso, la arquitectura y las decisiones técnicas t
 - [x] Formulario de registro y edición de información de cada unidad (placa, marca, modelo, estado, capacidad).
 - [x] Integración de los endpoints/consultas de Supabase en stores de Pinia.
 
-### FASE 4: Módulo de Conductores y Viajes (Pendiente)
-- [ ] Asignación de conductores a camiones.
-- [ ] Registro de viajes, orígenes, destinos y actualizaciones de estado en tiempo real.
-- [ ] Dashboard de estadísticas y resumen general de la flota.
+### FASE 4: Módulo de Conductores y Viajes (Completado)
+- [x] Asignación de conductores a camiones.
+- [x] Registro de viajes, orígenes, destinos y actualizaciones de estado en tiempo real.
+- [x] Dashboard de estadísticas y resumen general de la flota.
 
 ---
 

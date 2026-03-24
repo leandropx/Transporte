@@ -5,7 +5,7 @@
         <Truck class="h-12 w-12" />
       </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-brand-900">
-        FleetMaster
+        Transporte
       </h2>
     </div>
 

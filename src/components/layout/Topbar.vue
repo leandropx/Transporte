@@ -1,7 +1,7 @@
 <template>
   <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-    <!-- Mobile Menu Button (placeholder) -->
-    <button class="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+    <!-- Mobile Menu Button -->
+    <button @click="$emit('toggle-menu')" class="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
       <Menu class="h-6 w-6" />
     </button>
     
@@ -26,6 +26,8 @@ import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
+
+defineEmits(['toggle-menu'])
 
 const handleLogout = async () => {
   try {

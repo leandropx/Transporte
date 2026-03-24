@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <Users class="h-8 w-8 text-brand-600" /> Directorio de Conductores
@@ -9,32 +9,53 @@
       </div>
       <button 
         @click="openModal()"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-brand-600 hover:bg-brand-700 transition-colors"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-brand-600 hover:bg-brand-700 transition-colors shrink-0"
       >
         <UserPlus class="h-5 w-5 mr-2" /> Agregar Conductor
       </button>
     </div>
 
+    <!-- Buscador Local -->
+    <div class="mb-6 relative max-w-md">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Search class="h-5 w-5 text-gray-400" />
+      </div>
+      <input
+        v-model="workerStore.searchQuery"
+        type="text"
+        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm transition-colors"
+        placeholder="Filtrar por nombre, RUT o licencia..."
+      />
+    </div>
+
     <!-- Loading State -->
-    <div v-if="isLoading" class="animate-pulse space-y-4">
+    <div v-if="workerStore.isLoading" class="animate-pulse space-y-4">
       <div v-for="i in 5" :key="i" class="h-16 bg-white rounded-xl shadow-sm border border-gray-100"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 p-4 border border-red-200 rounded-xl text-red-600">
-      <AlertTriangle class="h-5 w-5 inline mr-2" /> {{ error }}
+    <div v-else-if="workerStore.error" class="bg-red-50 p-4 border border-red-200 rounded-xl text-red-600">
+      <AlertTriangle class="h-5 w-5 inline mr-2" /> {{ workerStore.error }}
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="workers.length === 0" class="glass-panel rounded-3xl p-12 text-center">
+    <div v-else-if="workerStore.workers.length === 0" class="glass-panel rounded-3xl p-12 text-center">
       <Users class="h-12 w-12 text-gray-300 mx-auto mb-4" />
       <h3 class="text-lg font-medium text-gray-900">No hay conductores registrados</h3>
       <p class="text-sm text-gray-500 mt-1">Registra al primer trabajador para comenzar a asignar rutas.</p>
     </div>
 
+    <!-- No Results found on search -->
+    <div v-else-if="workerStore.filteredWorkers.length === 0" class="glass-panel rounded-3xl p-12 text-center">
+      <Search class="h-12 w-12 text-gray-300 mx-auto mb-4" />
+      <h3 class="text-lg font-medium text-gray-900">No hay coincidencias</h3>
+      <p class="text-sm text-gray-500 mt-1">No se encontraron conductores para la búsqueda "{{ workerStore.searchQuery }}".</p>
+    </div>
+
     <!-- Data Table -->
     <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
@@ -45,7 +66,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="worker in workers" :key="worker.id" class="hover:bg-gray-50 transition-colors">
+          <tr v-for="worker in workerStore.filteredWorkers" :key="worker.id" class="hover:bg-gray-50 transition-colors">
             <td class="px-6 py-4">
               <div class="flex items-center">
                 <div class="flex-shrink-0 h-10 w-10 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold">
@@ -53,7 +74,7 @@
                 </div>
                 <div class="ml-4">
                   <div class="text-sm font-bold text-gray-900">{{ worker.full_name }}</div>
-                  <div class="text-xs text-gray-500">ID: {{ worker.id.split('-')[0] }}</div>
+                  <div class="text-xs text-gray-500">ID: {{ worker.id?.split('-')[0] }}</div>
                 </div>
               </div>
             </td>
@@ -78,6 +99,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -108,7 +130,7 @@
               required 
               :disabled="isEditing"
               @input="onRutInput"
-              class="block w-full border border-gray-300 rounded-lg px-3 py-2 font-mono focus:ring-brand-500 focus:border-brand-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed uppercase" 
+              class="block w-full border border-gray-300 rounded-lg px-3 py-2 font-mono uppercase focus:ring-brand-500 focus:border-brand-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" 
               placeholder="12.345.678-9" 
             />
             <p v-if="isEditing" class="text-xs text-gray-400 mt-1">El RUT es inmodificable. Recrear ficha si hay error.</p>
@@ -150,12 +172,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/services/supabase'
-import { Users, UserPlus, Edit2, AlertTriangle, X, Loader2 } from 'lucide-vue-next'
+import { useWorkersStore } from '@/stores/workers'
+import { Users, UserPlus, Edit2, AlertTriangle, X, Loader2, Search } from 'lucide-vue-next'
 
-const workers = ref<any[]>([])
-const isLoading = ref(true)
-const error = ref('')
+const workerStore = useWorkersStore()
 
 // Modal state
 const isModalOpen = ref(false)
@@ -170,23 +190,6 @@ const form = ref({
   license_type: 'A5',
   status: 'activo'
 })
-
-const fetchWorkers = async () => {
-  try {
-    isLoading.value = true
-    const { data, error: supaError } = await supabase
-      .from('workers')
-      .select('*')
-      .order('full_name', { ascending: true })
-      
-    if (supaError) throw supaError
-    workers.value = data || []
-  } catch (err: any) {
-    error.value = 'Error cargando los conductores: ' + (err.message || '')
-  } finally {
-    isLoading.value = false
-  }
-}
 
 const openModal = (worker: any = null) => {
   formError.value = ''
@@ -223,6 +226,7 @@ const cleanRut = (value: string) => {
 
 // Format logic: adding dots and hyphen
 const formatRut = (rut: string) => {
+  if (!rut) return ''
   let value = cleanRut(rut)
   if (value.length <= 1) return value
   
@@ -261,43 +265,24 @@ const submitForm = async () => {
   isSubmitting.value = true
   
   try {
-    const rawRut = cleanRut(form.value.rut) // Storing it cleanly in DB without dots
+    const rawRut = cleanRut(form.value.rut) // Guardamos limpio
     
     if (isEditing.value) {
-      // Update
-      const { error: updateError } = await supabase
-        .from('workers')
-        .update({
-          full_name: form.value.full_name.trim(),
-          license_type: form.value.license_type,
-          status: form.value.status
-        })
-        .eq('id', form.value.id)
-        
-      if (updateError) throw updateError
-      
+      await workerStore.updateWorker(form.value.id, {
+        full_name: form.value.full_name.trim(),
+        license_type: form.value.license_type,
+        status: form.value.status
+      })
     } else {
-      // Insert
-      const { error: insertError } = await supabase
-        .from('workers')
-        .insert({
-          rut: rawRut,
-          full_name: form.value.full_name.trim(),
-          license_type: form.value.license_type,
-          status: form.value.status
-        })
-        
-      if (insertError) {
-        if (insertError.code === '23505') {
-          throw new Error('Ya existe un trabajador registrado con este RUT.')
-        }
-        throw insertError
-      }
+      await workerStore.createWorker({
+        rut: rawRut,
+        full_name: form.value.full_name.trim(),
+        license_type: form.value.license_type,
+        status: form.value.status
+      })
     }
     
     closeModal()
-    await fetchWorkers()
-    
   } catch (err: any) {
     formError.value = err.message || 'Error al guardar el perfil del conductor'
   } finally {
@@ -326,6 +311,6 @@ const badgeClasses = (status: string) => {
 }
 
 onMounted(() => {
-  fetchWorkers()
+  workerStore.fetchWorkers()
 })
 </script>
