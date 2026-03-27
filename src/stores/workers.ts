@@ -1,20 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
+import { getErrorMessage } from '@/utils/formatters'
+import type { Worker } from '@/types/models'
 
-export interface Worker {
-  id: string
-  rut: string
-  full_name: string
-  license_type: string
-  status: string
-}
+const PAGE_SIZE = 25
 
 export const useWorkersStore = defineStore('workers', () => {
   const workers = ref<Worker[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const searchQuery = ref('')
+  const totalCount = ref(0)
+  const currentPage = ref(1)
 
   const filteredWorkers = computed(() => {
     if (!searchQuery.value) return workers.value
@@ -24,7 +22,7 @@ export const useWorkersStore = defineStore('workers', () => {
       worker.full_name.toLowerCase().includes(query) ||
       worker.rut.toLowerCase().includes(query) ||
       worker.license_type.toLowerCase().includes(query) ||
-      worker.status.toLowerCase().includes(query)
+      (worker.status || '').toLowerCase().includes(query)
     )
   })
 
@@ -32,19 +30,30 @@ export const useWorkersStore = defineStore('workers', () => {
     return workers.value.filter(w => w.status === 'activo')
   })
 
-  const fetchWorkers = async () => {
+  const totalPages = computed(() => Math.ceil(totalCount.value / PAGE_SIZE))
+
+  const fetchWorkers = async (page = 1) => {
     isLoading.value = true
     error.value = null
     try {
+      const { count } = await supabase
+        .from('workers')
+        .select('*', { count: 'exact', head: true })
+      totalCount.value = count || 0
+
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
       const { data, error: supaError } = await supabase
         .from('workers')
         .select('*')
         .order('full_name', { ascending: true })
+        .range(from, to)
         
       if (supaError) throw supaError
-      workers.value = data || []
-    } catch (err: any) {
-      error.value = 'Error cargando los conductores: ' + (err.message || '')
+      workers.value = (data || []) as Worker[]
+      currentPage.value = page
+    } catch (err: unknown) {
+      error.value = 'Error cargando los conductores: ' + getErrorMessage(err)
       console.error(err)
     } finally {
       isLoading.value = false
@@ -65,10 +74,10 @@ export const useWorkersStore = defineStore('workers', () => {
         throw insertError
       }
       
-      await fetchWorkers()
+      await fetchWorkers(currentPage.value)
       return true
-    } catch (err: any) {
-      error.value = err.message || 'Error registrando el conductor'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error registrando el conductor'
       throw err
     }
   }
@@ -83,10 +92,28 @@ export const useWorkersStore = defineStore('workers', () => {
         
       if (updateError) throw updateError
       
-      await fetchWorkers()
+      await fetchWorkers(currentPage.value)
       return true
-    } catch (err: any) {
-      error.value = err.message || 'Error al actualizar el conductor'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error al actualizar el conductor'
+      throw err
+    }
+  }
+
+  const deleteWorker = async (id: string) => {
+    error.value = null
+    try {
+      const { error: deleteError } = await supabase
+        .from('workers')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      await fetchWorkers(currentPage.value)
+      return true
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error al eliminar el conductor'
       throw err
     }
   }
@@ -98,8 +125,12 @@ export const useWorkersStore = defineStore('workers', () => {
     searchQuery,
     filteredWorkers,
     activeWorkers,
+    totalCount,
+    currentPage,
+    totalPages,
     fetchWorkers,
     createWorker,
-    updateWorker
+    updateWorker,
+    deleteWorker
   }
 })

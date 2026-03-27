@@ -11,9 +11,7 @@
           </span>
         </h1>
       </div>
-      <div class="w-full sm:w-96">
-        <GlobalSearch size="regular" />
-      </div>
+<div class="flex-grow"></div>
     </div>
 
     <!-- State 1: Loading Skeleton -->
@@ -78,7 +76,7 @@
             <Wrench class="h-5 w-5 text-gray-400" />
             <p class="text-sm font-medium text-gray-500">Costo Histórico de Mantención</p>
           </div>
-          <h3 class="text-2xl font-bold text-gray-900">${{ totalMaintenanceCost.toLocaleString() }}</h3>
+          <h3 class="text-2xl font-bold text-gray-900">{{ formatCurrency(totalMaintenanceCost) }}</h3>
           <p class="text-sm text-gray-500 mt-1">{{ truck.maintenance_logs?.length || 0 }} intervenciones</p>
         </div>
       </div>
@@ -112,7 +110,7 @@
                 <div class="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div class="flex items-center justify-between mb-2">
                     <span :class="['text-xs font-semibold px-2 py-1 rounded-full', routeStatusBadge(route.status)]">{{ route.status }}</span>
-                    <time class="text-xs text-gray-400 font-medium">{{ formatDate(route.start_date) }}</time>
+                    <time class="text-xs text-gray-400 font-medium">{{ formatDateFn(route.start_date) }}</time>
                   </div>
                   <div class="flex flex-col gap-2 relative">
                     <div class="flex items-start gap-2">
@@ -137,7 +135,12 @@
             <h3 class="text-lg font-bold text-gray-900 flex items-center">
               <Tool class="h-5 w-5 mr-2 text-brand-500" /> Historial de Mantenciones
             </h3>
-            <button class="text-sm text-brand-600 hover:text-brand-700 font-medium">+ Registrar</button>
+            <router-link 
+              to="/maintenance" 
+              class="inline-flex items-center px-3 py-1.5 border border-brand-200 text-xs font-bold rounded-lg text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors shadow-sm"
+            >
+              <Plus class="h-3.5 w-3.5 mr-1.5" /> Registrar Nuevo
+            </router-link>
           </div>
           
           <div class="p-0 flex-grow overflow-y-auto max-h-[500px]">
@@ -153,9 +156,9 @@
                     <span :class="['px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide', log.type === 'preventivo' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800']">
                       {{ log.type }}
                     </span>
-                    <span class="text-sm text-gray-500 font-medium">{{ formatDate(log.maintenance_date) }}</span>
+                    <span class="text-sm text-gray-500 font-medium">{{ formatDateFn(log.maintenance_date) }}</span>
                   </div>
-                  <span class="font-bold text-gray-900">${{ log.cost.toLocaleString() }}</span>
+                  <span class="font-bold text-gray-900">{{ formatCurrency(log.cost || 0) }}</span>
                 </div>
                 
                 <p class="text-gray-700 text-sm mt-2 font-medium">{{ log.description }}</p>
@@ -179,7 +182,7 @@
 <script setup lang="ts">
 import { watch, computed } from 'vue'
 import { useTruckSearch } from '@/composables/useTruckSearch'
-import GlobalSearch from '@/components/GlobalSearch.vue'
+import { formatDate as formatDateFn, formatCurrency } from '@/utils/formatters'
 import { 
   AlertTriangle, Truck, Wrench, Map, MapPin, 
   PenTool as Tool, PenTool, Plus, Navigation, Settings
@@ -246,12 +249,7 @@ const routeStatusBadge = (status: string) => {
   }
 }
 
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return 'N/A'
-  return new Intl.DateTimeFormat('es-CL', { 
-    day: '2-digit', month: 'short', year: 'numeric' 
-  }).format(new Date(dateString))
-}
+// formatDate is now imported from @/utils/formatters as formatDateFn
 </script>
 
 <style scoped>

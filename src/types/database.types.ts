@@ -91,6 +91,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_routes_driver"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "routes_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -101,28 +108,88 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          brand: string | null
           capacity: number | null
           created_at: string | null
+          documents: Json | null
           id: string
           license_plate: string
+          mileage: number | null
           model: string
           status: string
+          year_model: number | null
         }
         Insert: {
+          brand?: string | null
           capacity?: number | null
           created_at?: string | null
+          documents?: Json | null
           id?: string
           license_plate: string
+          mileage?: number | null
           model: string
           status?: string
+          year_model?: number | null
         }
         Update: {
+          brand?: string | null
           capacity?: number | null
           created_at?: string | null
+          documents?: Json | null
           id?: string
           license_plate?: string
+          mileage?: number | null
           model?: string
           status?: string
+          year_model?: number | null
+        }
+        Relationships: []
+      }
+      workers: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          documents: Json | null
+          email: string | null
+          emergency_contact: string | null
+          emergency_phone: string | null
+          full_name: string
+          id: string
+          license_type: string
+          phone: string | null
+          profile_picture_url: string | null
+          rut: string
+          status: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          documents?: Json | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          full_name: string
+          id?: string
+          license_type: string
+          phone?: string | null
+          profile_picture_url?: string | null
+          rut: string
+          status?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          documents?: Json | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          full_name?: string
+          id?: string
+          license_type?: string
+          phone?: string | null
+          profile_picture_url?: string | null
+          rut?: string
+          status?: string | null
         }
         Relationships: []
       }

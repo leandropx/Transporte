@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
+import { getErrorMessage } from '@/utils/formatters'
 import type { User, Session } from '@supabase/supabase-js'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -19,12 +20,20 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = data.session
       user.value = data.session?.user || null
       
-      supabase.auth.onAuthStateChange((_event, _session) => {
+      supabase.auth.onAuthStateChange((event, _session) => {
         session.value = _session
         user.value = _session?.user || null
+
+        // P4 #20: Manejar expiración de sesión
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          if (event === 'SIGNED_OUT') {
+            user.value = null
+            session.value = null
+          }
+        }
       })
-    } catch (error) {
-      console.error('Error initializing auth:', error)
+    } catch (err: unknown) {
+      console.error('Error initializing auth:', getErrorMessage(err))
     } finally {
       loading.value = false
     }
@@ -37,9 +46,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (error) throw error
       user.value = null
       session.value = null
-    } catch (error) {
-      console.error('Error signing out:', error)
-      throw error
+    } catch (err: unknown) {
+      console.error('Error signing out:', getErrorMessage(err))
+      throw err
     } finally {
       loading.value = false
     }

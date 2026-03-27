@@ -53,51 +53,66 @@
     </div>
 
     <!-- Data Table -->
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehículo / Conductor</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trayecto</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fechas</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ajustes</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="route in routeStore.filteredRoutes" :key="route.id" class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold bg-gray-100 text-gray-800 border border-gray-200 font-mono">
-                PPU: {{ route.vehicles?.license_plate || 'NN' }}
-              </span>
-              <div class="text-xs text-gray-500 mt-1 flex items-center">
-                <User class="w-3 h-3 mr-1" />
-                {{ route.workers?.full_name || 'Sin asignar' }}
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm font-medium text-gray-900 flex items-center">
-                {{ route.origin }} <ArrowRight class="w-3 h-3 mx-1 text-gray-400" /> {{ route.destination }}
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', statusBadge(route.status)]">
-                {{ route.status }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <div class="flex items-center gap-1"><Calendar class="w-4 h-4 text-gray-400" /> {{ formatDate(route.start_date) }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click="openModal(route)" class="text-brand-600 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 p-2 rounded-lg transition-colors">
-                <Edit2 class="w-4 h-4" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehículo / Conductor</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trayecto</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fechas</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ajustes</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <tr v-for="route in routeStore.filteredRoutes" :key="route.id" class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold bg-gray-100 text-gray-800 border border-gray-200 font-mono">
+                  PPU: {{ route.vehicles?.license_plate ? formatLicensePlate(route.vehicles.license_plate) : 'NN' }}
+                </span>
+                <div class="text-xs text-gray-500 mt-1 flex items-center">
+                  <User class="w-3 h-3 mr-1" />
+                  {{ route.workers?.full_name || 'Sin asignar' }}
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900 flex items-center">
+                  {{ route.origin }} <ArrowRight class="w-3 h-3 mx-1 text-gray-400" /> {{ route.destination }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', statusBadge(route.status)]">
+                  {{ route.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex items-center gap-1"><Calendar class="w-4 h-4 text-gray-400" /> {{ formatDate(route.start_date) }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex items-center justify-end gap-2">
+                  <button @click="openModal(route)" class="text-brand-600 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 p-2 rounded-lg transition-colors" title="Editar">
+                    <Edit2 class="w-4 h-4" />
+                  </button>
+                  <button @click="handleDelete(route)" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Eliminar">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
       </div>
+      <!-- Paginación -->
+      <PaginationControls
+        :current-page="routeStore.currentPage"
+        :total-pages="routeStore.totalPages"
+        :total-count="routeStore.totalCount"
+        :page-size="25"
+        @page-change="routeStore.fetchRoutes($event)"
+      />
     </div>
 
     <!-- Modal for New/Edit Route -->
@@ -117,7 +132,7 @@
 
           <div v-if="!isEditing">
             <label class="block text-sm font-medium text-gray-700 mb-1">Patente del Vehículo *</label>
-            <input v-model="form.license" type="text" required class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500 uppercase font-mono" placeholder="AB-1234" />
+            <input v-model="form.license" type="text" required class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500 uppercase font-mono" placeholder="AB·12·34" />
           </div>
           <div v-else>
             <label class="block text-sm font-medium text-gray-700 mb-1">Patente del Vehículo</label>
@@ -179,10 +194,14 @@ import { ref, onMounted } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useRoutesStore } from '@/stores/routes'
 import { useWorkersStore } from '@/stores/workers'
-import { Map, Plus, AlertTriangle, MapPin, Calendar, X, Loader2, Search, User, ArrowRight, Edit2 } from 'lucide-vue-next'
+import { useToast } from '@/composables/useToast'
+import { formatDate, formatLicensePlate, getErrorMessage } from '@/utils/formatters'
+import { Map, Plus, AlertTriangle, MapPin, Calendar, X, Loader2, Search, User, ArrowRight, Edit2, Trash2 } from 'lucide-vue-next'
+import PaginationControls from '@/components/PaginationControls.vue'
 
 const routeStore = useRoutesStore()
 const workerStore = useWorkersStore()
+const toast = useToast()
 
 const isInitializingLocal = ref(true)
 const isModalOpen = ref(false)
@@ -199,6 +218,16 @@ const form = ref({
   status: 'planeada',
   start_date: new Date().toISOString().split('T')[0]
 })
+
+const handleDelete = async (route: { id: string; origin: string; destination: string }) => {
+  if (!confirm(`¿Eliminar la ruta ${route.origin} → ${route.destination}?`)) return
+  try {
+    await routeStore.deleteRoute(route.id)
+    toast.success('Ruta eliminada correctamente')
+  } catch (err: unknown) {
+    toast.error('Error al eliminar: ' + getErrorMessage(err))
+  }
+}
 
 const openModal = (routeRecord: any = null) => {
   formError.value = ''
@@ -238,20 +267,15 @@ const submitRoute = async () => {
         origin: form.value.origin.trim(),
         destination: form.value.destination.trim(),
         driver_id: form.value.driver_id || null,
-        status: form.value.status,
+        status: form.value.status as any,
         start_date: form.value.start_date ? new Date(form.value.start_date).toISOString() : null
       })
+      toast.success('Ruta actualizada correctamente')
     } else {
-      let formattedPlate = form.value.license.toUpperCase().replace(/[\s-]/g, '')
-      if (formattedPlate.length === 6) {
-        if (/^[A-Z]{2}[0-9]{4}$/.test(formattedPlate)) {
-          formattedPlate = formattedPlate.substring(0, 2) + '-' + formattedPlate.substring(2)
-        } else if (/^[BCDFGHJKLPRSTVWXYZ]{4}[0-9]{2}$/.test(formattedPlate)) {
-          formattedPlate = formattedPlate.substring(0, 4) + '-' + formattedPlate.substring(4)
-        }
-      }
+      // Resolve license plate to formatted version for lookup
+      const formattedPlate = formatLicensePlate(form.value.license)
 
-      // Validating vehicle existance
+      // Validating vehicle existence
       const { data: vData, error: vError } = await supabase
         .from('vehicles')
         .select('id')
@@ -269,12 +293,13 @@ const submitRoute = async () => {
         destination: form.value.destination.trim(),
         start_date: form.value.start_date ? new Date(form.value.start_date).toISOString() : null,
         status: 'planeada'
-      })
+      } as any)
+      toast.success('Ruta registrada correctamente')
     }
     
     isModalOpen.value = false
-  } catch (err: any) {
-    formError.value = err.message || 'Error al guardar la ruta'
+  } catch (err: unknown) {
+    formError.value = getErrorMessage(err) || 'Error al guardar la ruta'
   } finally {
     isSubmitting.value = false
   }
@@ -290,13 +315,7 @@ const statusBadge = (status: string) => {
   }
 }
 
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return 'N/A'
-  return new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(dateString))
-}
-
 onMounted(async () => {
-  // Load both stores info to have data ready for views and modals
   await Promise.all([
     routeStore.fetchRoutes(),
     workerStore.fetchWorkers()

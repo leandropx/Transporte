@@ -1,34 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
+import { getErrorMessage } from '@/utils/formatters'
+import type { Route } from '@/types/models'
 
-export interface VehicleRef {
-  license_plate: string
-}
-
-export interface WorkerRef {
-  full_name: string
-}
-
-export interface Route {
-  id: string
-  vehicle_id: string
-  driver_id: string | null
-  origin: string
-  destination: string
-  status: string
-  start_date: string | null
-  end_date: string | null
-  created_at?: string
-  vehicles?: VehicleRef
-  workers?: WorkerRef
-}
+const PAGE_SIZE = 25
 
 export const useRoutesStore = defineStore('routes', () => {
   const routes = ref<Route[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const searchQuery = ref('')
+  const totalCount = ref(0)
+  const currentPage = ref(1)
 
   const filteredRoutes = computed(() => {
     if (!searchQuery.value) return routes.value
@@ -47,20 +31,30 @@ export const useRoutesStore = defineStore('routes', () => {
     return routes.value.filter(r => r.status === 'en curso' || r.status === 'planeada')
   })
 
-  const fetchRoutes = async () => {
+  const totalPages = computed(() => Math.ceil(totalCount.value / PAGE_SIZE))
+
+  const fetchRoutes = async (page = 1) => {
     isLoading.value = true
     error.value = null
     try {
+      const { count } = await supabase
+        .from('routes')
+        .select('*', { count: 'exact', head: true })
+      totalCount.value = count || 0
+
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
       const { data, error: supaError } = await supabase
         .from('routes')
         .select('*, vehicles(license_plate, model), workers(full_name)')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .range(from, to)
         
       if (supaError) throw supaError
-      routes.value = data || []
-    } catch (err: any) {
-      error.value = 'Error cargando las rutas: ' + (err.message || '')
+      routes.value = (data || []) as Route[]
+      currentPage.value = page
+    } catch (err: unknown) {
+      error.value = 'Error cargando las rutas: ' + getErrorMessage(err)
       console.error(err)
     } finally {
       isLoading.value = false
@@ -76,10 +70,10 @@ export const useRoutesStore = defineStore('routes', () => {
         
       if (insertError) throw insertError
       
-      await fetchRoutes()
+      await fetchRoutes(currentPage.value)
       return true
-    } catch (err: any) {
-      error.value = err.message || 'Error registrando la ruta'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error registrando la ruta'
       throw err
     }
   }
@@ -94,10 +88,28 @@ export const useRoutesStore = defineStore('routes', () => {
         
       if (updateError) throw updateError
       
-      await fetchRoutes()
+      await fetchRoutes(currentPage.value)
       return true
-    } catch (err: any) {
-      error.value = err.message || 'Error actualizando la ruta'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error actualizando la ruta'
+      throw err
+    }
+  }
+
+  const deleteRoute = async (id: string) => {
+    error.value = null
+    try {
+      const { error: deleteError } = await supabase
+        .from('routes')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      await fetchRoutes(currentPage.value)
+      return true
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err) || 'Error al eliminar la ruta'
       throw err
     }
   }
@@ -109,8 +121,12 @@ export const useRoutesStore = defineStore('routes', () => {
     searchQuery,
     filteredRoutes,
     activeRoutes,
+    totalCount,
+    currentPage,
+    totalPages,
     fetchRoutes,
     createRoute,
-    updateRoute
+    updateRoute,
+    deleteRoute
   }
 })

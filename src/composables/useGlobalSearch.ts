@@ -1,5 +1,10 @@
+/**
+ * Composable para búsqueda global multi-tabla.
+ * Ejecuta consultas concurrentes contra vehicles, routes, maintenance_logs y workers.
+ */
 import { ref } from 'vue'
 import { supabase } from '@/services/supabase'
+import { getErrorMessage } from '@/utils/formatters'
 
 export interface SearchResult {
   id: string
@@ -25,7 +30,6 @@ export function useGlobalSearch() {
     const searchTerm = `%${query}%`
 
     try {
-      // Execute multi-table queries concurrently
       const [vehiclesRes, routesRes, maintenanceRes, workersRes] = await Promise.all([
         supabase
           .from('vehicles')
@@ -54,11 +58,10 @@ export function useGlobalSearch() {
 
       const combinedResults: SearchResult[] = []
 
-      // Parse Vehicles
       if (vehiclesRes.data) {
         vehiclesRes.data.forEach(v => {
           combinedResults.push({
-            id: v.license_plate, // Since we route by license plate for trucks
+            id: v.license_plate,
             type: 'vehicle',
             title: v.license_plate,
             subtitle: `${v.model} - ${v.status}`,
@@ -67,33 +70,30 @@ export function useGlobalSearch() {
         })
       }
 
-      // Parse Routes
       if (routesRes.data) {
         routesRes.data.forEach(r => {
           combinedResults.push({
             id: String(r.id),
             type: 'route',
             title: `${r.origin} ➔ ${r.destination}`,
-            subtitle: `Camión: ${r.vehicles?.license_plate || '?'} - ${r.status}`,
+            subtitle: `Camión: ${(r.vehicles as any)?.license_plate || '?'} - ${r.status}`,
             metadata: r
           })
         })
       }
 
-      // Parse Maintenance
       if (maintenanceRes.data) {
         maintenanceRes.data.forEach(m => {
           combinedResults.push({
             id: String(m.id),
             type: 'maintenance',
-            title: m.description,
-            subtitle: `Camión: ${m.vehicles?.license_plate || '?'} - ${m.type} ($${m.cost})`,
+            title: m.description || 'Sin descripción',
+            subtitle: `Camión: ${(m.vehicles as any)?.license_plate || '?'} - ${m.type} ($${m.cost})`,
             metadata: m
           })
         })
       }
 
-      // Parse Workers
       if (workersRes.data) {
         workersRes.data.forEach(w => {
           combinedResults.push({
@@ -107,8 +107,8 @@ export function useGlobalSearch() {
       }
 
       results.value = combinedResults
-    } catch (err: any) {
-      error.value = err.message || 'Error al realizar la búsqueda'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err)
       results.value = []
     } finally {
       isSearching.value = false

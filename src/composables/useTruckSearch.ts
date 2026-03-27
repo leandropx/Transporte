@@ -1,7 +1,12 @@
+/**
+ * Composable para buscar un camión por patente con sus rutas y mantenciones.
+ * Usa la misma lógica de formateo centralizada.
+ */
 import { ref } from 'vue'
 import { supabase } from '@/services/supabase'
+import { formatLicensePlate, getErrorMessage } from '@/utils/formatters'
 
-export interface Route {
+export interface TruckRoute {
   id: string
   origin: string
   destination: string
@@ -10,7 +15,7 @@ export interface Route {
   end_date: string | null
 }
 
-export interface MaintenanceLog {
+export interface TruckMaintenanceLog {
   id: string
   type: string
   description: string
@@ -19,18 +24,21 @@ export interface MaintenanceLog {
   maintenance_date: string
 }
 
-export interface Truck {
+export interface TruckFull {
   id: string
   license_plate: string
   model: string
+  brand: string | null
+  year_model: number | null
+  mileage: number | null
   capacity: number
   status: string
-  routes?: Route[]
-  maintenance_logs?: MaintenanceLog[]
+  routes?: TruckRoute[]
+  maintenance_logs?: TruckMaintenanceLog[]
 }
 
 export function useTruckSearch() {
-  const truck = ref<Truck | null>(null)
+  const truck = ref<TruckFull | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
@@ -40,7 +48,9 @@ export function useTruckSearch() {
     truck.value = null
 
     try {
-      // Usando "joins" de Supabase para obtener todo en una sola respuesta
+      // Try the formatted version first (for consistent lookup)
+      const formattedPlate = formatLicensePlate(licensePlate)
+      
       const { data, error: supaError } = await supabase
         .from('vehicles')
         .select(`
@@ -48,12 +58,11 @@ export function useTruckSearch() {
           routes (*),
           maintenance_logs (*)
         `)
-        .eq('license_plate', licensePlate.toUpperCase().trim())
+        .eq('license_plate', formattedPlate)
         .single()
 
       if (supaError) {
         if (supaError.code === 'PGRST116') {
-          // Record not found
           error.value = 'Camión no encontrado'
         } else {
           error.value = supaError.message
@@ -61,10 +70,10 @@ export function useTruckSearch() {
         return null
       }
 
-      truck.value = data as Truck
-      return data as Truck
-    } catch (err: any) {
-      error.value = err.message || 'Error inesperado durante la búsqueda'
+      truck.value = data as TruckFull
+      return data as TruckFull
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err)
       return null
     } finally {
       isLoading.value = false

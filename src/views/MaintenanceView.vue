@@ -33,45 +33,61 @@
     </div>
 
     <!-- Data Table -->
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehículo</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo & Fecha</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold bg-gray-100 text-gray-800 border border-gray-200 font-mono">
-                {{ log.vehicles?.license_plate || 'Desconocido' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center gap-2 mb-1">
-                <span :class="['px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide', log.type === 'preventivo' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800']">
-                  {{ log.type }}
+    <div v-else>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehículo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo & Fecha</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold bg-gray-100 text-gray-800 border border-gray-200 font-mono">
+                  {{ log.vehicles?.license_plate ? formatLicensePlate(log.vehicles.license_plate) : 'Desconocido' }}
                 </span>
-              </div>
-              <div class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(log.maintenance_date) }}</div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-gray-900 line-clamp-2 max-w-xs" :title="log.description">{{ log.description }}</div>
-              <div v-if="log.replaced_parts?.length">
-                <span class="text-xs text-gray-400 font-medium">Refacciones: {{ log.replaced_parts.join(', ') }}</span>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-              ${{ log.cost.toLocaleString() }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-2 mb-1">
+                  <span :class="['px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide', log.type === 'preventivo' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800']">
+                    {{ log.type }}
+                  </span>
+                </div>
+                <div class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(log.maintenance_date) }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900 line-clamp-2 max-w-xs" :title="log.description">{{ log.description }}</div>
+                <div v-if="log.replaced_parts?.length">
+                  <span class="text-xs text-gray-400 font-medium">Refacciones: {{ log.replaced_parts.join(', ') }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                {{ formatCurrency(log.cost || 0) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button @click="handleDeleteLog(log)" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Eliminar">
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
       </div>
+      <!-- Paginación -->
+      <PaginationControls
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :total-count="totalCount"
+        :page-size="pageSize"
+        @page-change="fetchLogs($event)"
+      />
     </div>
 
     <!-- Modal for New Maintenance -->
@@ -95,7 +111,7 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Patente *</label>
-              <input v-model="form.license" type="text" required class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500 uppercase font-mono" placeholder="AB-1234" />
+              <input v-model="form.license" type="text" required class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500 uppercase font-mono" placeholder="AB·12·34" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Costo Total ($)</label>
@@ -135,13 +151,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/services/supabase'
-import { PenTool as Tool, Plus, AlertTriangle, Wrench, Calendar, X, Loader2 } from 'lucide-vue-next'
+import { useToast } from '@/composables/useToast'
+import { formatDate, formatCurrency, formatLicensePlate, getErrorMessage } from '@/utils/formatters'
+import { PenTool as Tool, Plus, AlertTriangle, Wrench, Calendar, X, Loader2, Trash2 } from 'lucide-vue-next'
+import PaginationControls from '@/components/PaginationControls.vue'
+
+const toast = useToast()
 
 const logs = ref<any[]>([])
 const isLoading = ref(true)
 const error = ref('')
+const totalCount = ref(0)
+const currentPage = ref(1)
+const pageSize = 25
+
+const totalPages = computed(() => Math.ceil(totalCount.value / pageSize))
 
 const isModalOpen = ref(false)
 const isSubmitting = ref(false)
@@ -154,35 +180,52 @@ const form = ref({
   parts: ''
 })
 
-const fetchLogs = async () => {
+const fetchLogs = async (page = 1) => {
   try {
     isLoading.value = true
+    
+    const { count } = await supabase
+      .from('maintenance_logs')
+      .select('*', { count: 'exact', head: true })
+    totalCount.value = count || 0
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
     const { data, error: supaError } = await supabase
       .from('maintenance_logs')
       .select('*, vehicles(license_plate)')
       .order('created_at', { ascending: false })
-      .limit(50)
+      .range(from, to)
       
     if (supaError) throw supaError
     logs.value = data || []
-  } catch (err: any) {
-    error.value = 'Error cargando las mantenciones: ' + (err.message || '')
+    currentPage.value = page
+  } catch (err: unknown) {
+    error.value = 'Error cargando las mantenciones: ' + getErrorMessage(err)
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleDeleteLog = async (log: { id: string }) => {
+  if (!confirm('¿Eliminar este registro de mantención?')) return
+  try {
+    const { error: deleteError } = await supabase
+      .from('maintenance_logs')
+      .delete()
+      .eq('id', log.id)
+    if (deleteError) throw deleteError
+    toast.success('Registro de mantención eliminado')
+    await fetchLogs(currentPage.value)
+  } catch (err: unknown) {
+    toast.error('Error al eliminar: ' + getErrorMessage(err))
   }
 }
 
 const submitLog = async () => {
   formError.value = ''
 
-  let formattedPlate = form.value.license.toUpperCase().replace(/[\s-]/g, '')
-  if (formattedPlate.length === 6) {
-    if (/^[A-Z]{2}[0-9]{4}$/.test(formattedPlate)) {
-      formattedPlate = formattedPlate.substring(0, 2) + '-' + formattedPlate.substring(2)
-    } else if (/^[BCDFGHJKLPRSTVWXYZ]{4}[0-9]{2}$/.test(formattedPlate)) {
-      formattedPlate = formattedPlate.substring(0, 4) + '-' + formattedPlate.substring(4)
-    }
-  }
+  const formattedPlate = formatLicensePlate(form.value.license)
 
   isSubmitting.value = true
   
@@ -218,18 +261,14 @@ const submitLog = async () => {
     // Success
     isModalOpen.value = false
     form.value = { license: '', type: 'preventivo', description: '', cost: 0, parts: '' }
-    await fetchLogs() // refresh table
+    toast.success('Mantención registrada correctamente')
+    await fetchLogs(currentPage.value)
     
-  } catch (err: any) {
-    formError.value = err.message || 'Error al guardar el registro'
+  } catch (err: unknown) {
+    formError.value = getErrorMessage(err) || 'Error al guardar el registro'
   } finally {
     isSubmitting.value = false
   }
-}
-
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return 'N/A'
-  return new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(dateString))
 }
 
 onMounted(() => {

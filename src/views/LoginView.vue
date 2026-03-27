@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="text-center">
       <h3 class="text-lg font-medium text-gray-900">Iniciar Sesión</h3>
-      <p class="mt-1 text-sm text-gray-500">Ingresa a tu cuenta para administrar la flota.</p>
+      <p class="mt-1 text-sm text-gray-500">Sistema registro transportes</p>
     </div>
 
     <form @submit.prevent="handleLogin" class="space-y-4">
@@ -43,6 +43,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/services/supabase'
+import { getErrorMessage } from '@/utils/formatters'
 
 const router = useRouter()
 const email = ref('')
@@ -63,8 +64,8 @@ const handleLogin = async () => {
     if (error) throw error
     
     router.push('/')
-  } catch (error: any) {
-    errorMsg.value = error.message || 'Error al iniciar sesión'
+  } catch (err: unknown) {
+    errorMsg.value = getErrorMessage(err) || 'Error al iniciar sesión'
   } finally {
     loading.value = false
   }

@@ -12,9 +12,13 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE public.vehicles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     license_plate VARCHAR(20) NOT NULL UNIQUE,
+    brand TEXT,
     model TEXT NOT NULL,
+    year_model INTEGER,
+    mileage INTEGER,
     capacity NUMERIC, -- Using numeric to allow decimals if needed (e.g., tons, kg)
     status TEXT NOT NULL CHECK (status IN ('disponible', 'en ruta', 'en taller', 'inactivo')) DEFAULT 'disponible',
+    documents JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
 );
 
@@ -123,3 +127,12 @@ ON public.maintenance_logs FOR UPDATE TO authenticated USING (true);
 
 CREATE POLICY "Maintenance logs deleted by authenticated users"
 ON public.maintenance_logs FOR DELETE TO authenticated USING (true);
+
+-------------------------------------------------------
+-- 4. STORAGE
+-------------------------------------------------------
+
+-- Create Storage bucket "fleet_assets" for documents and pictures
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('fleet_assets', 'fleet_assets', true)
+ON CONFLICT (id) DO NOTHING;
